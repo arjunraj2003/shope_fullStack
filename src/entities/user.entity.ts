@@ -1,5 +1,6 @@
 import { Column, CreateDateColumn, Entity, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn} from 'typeorm'
 import { Dress } from './dress.entity';
+import { Message } from './message.entity';
 
 export enum UserRole{
     ADMIN="admin",
@@ -32,4 +33,7 @@ export class User{
 
     @UpdateDateColumn()
     updateAt:Date;
+
+    @OneToMany(()=>Message,(message)=>message.user)
+    messages:Message[];
 }

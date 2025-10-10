@@ -29,7 +29,7 @@ export class Dress{
     stock: number;
 
     @Column({type:'enum',enum:AgeGroup})
-    catogory:AgeGroup;
+    category:AgeGroup;
 
     @Column({type:'enum',enum:Gender})
     gender:Gender;

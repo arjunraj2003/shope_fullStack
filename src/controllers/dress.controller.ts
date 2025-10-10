@@ -7,8 +7,11 @@ export class DressController{
         try{
             const userId=(req as any).user?.id;
             const data=req.body
+            const files=req.files as Express.Multer.File[];
+
+            const imageUrls=files.map((file)=>`/uploads/dresses/${file.filename}`);
             
-            const dress=await DressOperations.createDress(data,userId);
+            const dress=await DressOperations.createDress(data,userId,imageUrls);
             res.status(201).json(new ApiResponse(true,"Dress created successfully",dress));
         }catch(error){
             next(error)
@@ -17,7 +20,9 @@ export class DressController{
 
     static async getAllDress(req:Request,res:Response,next:NextFunction){
         try{
-            const dresses=await DressOperations.getAllDress();
+            const filters=req.query;
+            const dresses=await DressOperations.getAllDress(filters);
+          
             res.status(200).json(new ApiResponse(true,"Dress Fetched successfully ",dresses));
         }catch(error){
             next(error);
@@ -40,7 +45,10 @@ export class DressController{
             const userId=(req as any).user.id;
             const dressId=req.params.id;
             const data=req.body;
-            const dress=await DressOperations.updateDressById(dressId,data,userId);
+            const files=req.files as Express.Multer.File[];
+
+            const imageUrls=files.map((file)=>`/uploads/dresses/${file.filename}`);
+            const dress=await DressOperations.updateDressById(dressId,data,userId,imageUrls);
             res.status(200).json(new ApiResponse(true,"Dress Updated successfully",dress))
         }catch(error){
             next(error);

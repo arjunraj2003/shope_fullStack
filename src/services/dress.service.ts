@@ -6,10 +6,10 @@ const dressRepo=AppDataSource.getRepository(Dress);
 
 
 export class DressOperations{
-    static async createDress(data:Partial<Dress>,userId:string){
+    static async createDress(data:Partial<Dress>,userId:string,imageUrls:string[]){
         try{
             console.log(data,userId)
-            const dress=dressRepo.create({...data,user:{id:userId}as any});
+            const dress=dressRepo.create({...data,images:imageUrls,user:{id:userId}as any});
             return await dressRepo.save(dress);
         }catch(error){
             console.log(error)
@@ -17,10 +17,49 @@ export class DressOperations{
         }
     }
 
-    static async getAllDress(){
+    static async getAllDress(filters:any){
         try{
-            return await dressRepo.find({relations:['user']});
+            const {search,category,gender,minPrice,maxPrice,page = 1, limit = 10}=filters;
+
+            const query=dressRepo.createQueryBuilder('dress').leftJoinAndSelect('dress.user','user');
+
+             if (search) {
+                query.andWhere(
+                    `(LOWER(dress.name) ILIKE :search OR LOWER(dress.description) ILIKE :search)`,
+                    { search: `%${search.toLowerCase()}%` }
+                );
+            }
+            if (category) {
+                query.andWhere('dress.category = :category', { category });
+            }
+            if (gender) {
+                query.andWhere('dress.gender = :gender', { gender });
+            }
+
+            if (minPrice) {
+                query.andWhere('dress.price >= :minPrice', { minPrice: parseFloat(minPrice) });
+            }
+
+            if (maxPrice) {
+                query.andWhere('dress.price <= :maxPrice', { maxPrice: parseFloat(maxPrice) });
+            }
+
+            const take = parseInt(limit);
+            const skip = (parseInt(page) - 1) * take;
+
+            query.skip(skip).take(take);
+
+             const [data, total] = await query.getManyAndCount();
+
+            return {
+            data,
+            total,
+            currentPage: parseInt(page),
+            totalPages: Math.ceil(total / take),
+            };
+            
         }catch(error){
+            console.log(error)
             throw new ApiError(500,"Faild to fetch dresses");
         }
     }
@@ -31,7 +70,7 @@ export class DressOperations{
         return dress;
     }
 
-    static async updateDressById(id:string,data:Partial<Dress>,userId:string){
+    static async updateDressById(id:string,data:Partial<Dress>,userId:string,imageUrls:string[]){
         const dress=await dressRepo.findOne({where:{id},relations:['user']});
         if(!dress) throw new ApiError(404,"Dress not found");
 
@@ -39,6 +78,9 @@ export class DressOperations{
 
         try{
             Object.assign(dress,data);
+            if (imageUrls.length > 0) {
+              dress.images = imageUrls;
+            }
             return await dressRepo.save(dress);
         }catch(error){
             throw new ApiError(400,"Faild to update the dress");
