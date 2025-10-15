@@ -10,7 +10,8 @@ import path from "path"
 
 const app=express()
 app.use(cors({
-  origin: 'https://shope-fullstack.onrender.com', // your frontend
+  origin: true,
+  // origin: 'https://shope-fullstack.onrender.com', // your frontend
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // Add all required methods
   allowedHeaders: ['Content-Type', 'Authorization'], // Add other headers if needed
