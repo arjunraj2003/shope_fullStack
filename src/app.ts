@@ -10,7 +10,7 @@ import path from "path"
 
 const app=express()
 app.use(cors({
-  origin: 'http://localhost:3000',
+  origin: 'https://shope-fullstack.onrender.com',
   credentials: true
 }));
 app.use(express.json());
