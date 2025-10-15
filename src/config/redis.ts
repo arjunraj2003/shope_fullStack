@@ -21,12 +21,25 @@ import { createClient } from "redis";
 
 const redis = createClient({
   url: process.env.REDIS_URL,
+  socket: {
+    tls: true, // ✅ Important for Upstash
+    reconnectStrategy: retries => Math.min(retries * 500, 5000), // Optional: reconnect logic
+  },
 });
 
 redis.on("error", (err) => {
   console.error("Redis connection error:", err);
 });
 
-redis.connect();
+// ✅ Use async/await to handle connection errors properly
+(async () => {
+  try {
+    await redis.connect();
+    console.log("Connected to Redis successfully");
+  } catch (err) {
+    console.error("Redis connection failed:", err);
+  }
+})();
 
 export default redis;
+
