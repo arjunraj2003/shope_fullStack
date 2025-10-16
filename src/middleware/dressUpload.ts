@@ -1,24 +1,25 @@
 import multer from "multer";
 import path from "path";
-import fs from "fs";
+import { CloudinaryStorage } from "multer-storage-cloudinary";
+import cloudinary from "../config/cloudinary"; // your cloudinary config file
 
-const uploadDir = path.join(__dirname, "../../uploads/dresses");
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
-}
-
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, uploadDir);
-  },
-  filename: (req, file, cb) => {
+const storage = new CloudinaryStorage({
+  cloudinary,
+  params: async (req, file) => {
     const unique = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    const ext = path.extname(file.originalname);
-    cb(null, file.fieldname + "-" + unique + ext);
+    return {
+      folder: "dresses",
+      public_id: `${file.fieldname}-${unique}`,
+      format: path.extname(file.originalname).replace(".", ""), // extract extension (without dot)
+    };
   },
 });
 
-const fileFilter = (req: Express.Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
+const fileFilter = (
+  req: Express.Request,
+  file: Express.Multer.File,
+  cb: multer.FileFilterCallback
+) => {
   const allowed = /jpeg|jpg|png|webp/;
   const ext = path.extname(file.originalname).toLowerCase();
   if (allowed.test(ext)) cb(null, true);
