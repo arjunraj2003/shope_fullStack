@@ -13,7 +13,7 @@ export class DressOperations {
     ) {
         try {
             const { isActive } = data;
-
+            console.log(imageUrls)
             const parsedIsActive =
                 typeof isActive === 'string'
                     ? isActive === 'true'

@@ -1,7 +1,8 @@
 import { Request, Response } from "express";
 import { AuthService } from "../services/auth.service";
 import { LoginSchema, RegisterSchema } from "../validation/auth.schema";
-import redis from '../config/redis';
+import { getRedisClient } from "../config/redis";
+
 
 
 
@@ -24,11 +25,12 @@ export class AuthController{
     static async login(req:Request,res:Response){
         try{
             const {email,password}=LoginSchema.parse(req.body);
+            console.log(email,password);
             const {user,accessToken,refreshToken,tokenId}=await AuthService.login(email,password);
-
-            await redis.set(`refresh:${user.id}:${tokenId}`,refreshToken,{
-                EX:7*24*60*60
-            });
+            const redis = getRedisClient();
+            await redis.set(`refresh:${user.id}:${tokenId}`,refreshToken,
+                'EX',7*24*60*60
+            );
 
             res.cookie("refreshToken",refreshToken,{
                 httpOnly:true,
@@ -61,6 +63,7 @@ export class AuthController{
             if(!refreshToken || !tokenId) return res.status(401).json({message:"Missing refresh token or token ID"});
 
             const { userId } = await AuthService.verifyRefreshToken(refreshToken);
+            const redis = getRedisClient();
 
             const storedToken = await redis.get(`refresh:${userId}:${tokenId}`);
 
@@ -87,6 +90,7 @@ export class AuthController{
         const { userId } = await AuthService.verifyRefreshToken(refreshToken);
 
         // Remove from Redis
+        const redis = getRedisClient();
         await redis.del(`refresh:${userId}:${tokenId}`);
 
         // Clear cookies

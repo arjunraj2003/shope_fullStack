@@ -1,45 +1,51 @@
-// import { createClient } from "redis";
+// import Redis from "ioredis";
 
-// const redis=createClient(
-//      {
-//         socket: {
-//         host: 'localhost',  // or your Redis host/IP or container name
-//         port: 6379,         // or your Redis port
-//         timeout: 10000      // optional: increase timeout to 10s
-//         }
-//      }
-// );
+// let redisInstance: Redis | null = null;
 
-// redis.on("error",(err)=>console.log("Redis error:",err));
+// export const getRedisClient = (): Redis => {
+//   if (!redisInstance) {
+//     redisInstance = new Redis({
+//       host: process.env.REDIS_HOST || "127.0.0.1",
+//       port: Number(process.env.REDIS_PORT || 6379),
+//       password: process.env.REDIS_PASSWORD || undefined,
+//       db: 0,
+//       connectTimeout: 2000,
+//       maxRetriesPerRequest: null,
+//       retryStrategy: (times) => Math.min(times * 50, 2000),
+//     });
 
-// redis.connect();
+//     redisInstance.on("connect", () => console.log("✅ Connected to Redis"));
+//     redisInstance.on("error", (err) => console.error("❌ Redis error:", err.message));
+//   }
+//   return redisInstance;
+// };
 
 
-// export default redis;
+import Redis from "ioredis";
 
-import { createClient } from "redis";
+let redisInstance: Redis | null = null;
 
-const redis = createClient({
-  url: process.env.REDIS_URL,
-  socket: {
-    tls: true, // ✅ Important for Upstash
-    reconnectStrategy: retries => Math.min(retries * 500, 5000), // Optional: reconnect logic
-  },
-});
+export const getRedisClient = (): Redis => {
+  if (!redisInstance) {
+    if (!process.env.REDIS_URL) {
+      throw new Error("REDIS_URL environment variable is not set!");
+    }
 
-redis.on("error", (err) => {
-  console.error("Redis connection error:", err);
-});
+    redisInstance = new Redis(process.env.REDIS_URL, {
+      maxRetriesPerRequest: null,
+      connectTimeout: 5000,
+      retryStrategy: (times: number) => Math.min(times * 50, 2000),
+    });
 
-// ✅ Use async/await to handle connection errors properly
-(async () => {
-  try {
-    await redis.connect();
-    console.log("Connected to Redis successfully");
-  } catch (err) {
-    console.error("Redis connection failed:", err);
+    redisInstance.on("connect", () => console.log("✅ Connected to Redis"));
+    redisInstance.on("ready", () => console.log("✅ Redis is ready to use"));
+    redisInstance.on("error", (err) => console.error("❌ Redis error:", err.message));
+    redisInstance.on("close", () => console.warn("⚠️ Redis connection closed"));
+    redisInstance.on("reconnecting", (time: number) => {
+      console.log(`🔄 Reconnecting to Redis in ${time}ms`);
+    });
   }
-})();
 
-export default redis;
+  return redisInstance;
+};
 

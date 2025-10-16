@@ -52,7 +52,7 @@ export class DressController {
             const data = req.body;
             const files = req.files as Express.Multer.File[];
 
-            const imageUrls = files.map((file) => `/uploads/dresses/${file.filename}`);
+            const imageUrls = files.map((file) => file.path);
             const dress = await DressOperations.updateDressById(dressId, data, userId, imageUrls);
             res.status(200).json(new ApiResponse(true, "Dress Updated successfully", dress))
         } catch (error) {
