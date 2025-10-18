@@ -9,8 +9,15 @@ import path from "path"
 
 
 const app=express()
+const allowedOrigins = [process.env.FRONTEND_URL, 'http://localhost:3000'];
 app.use(cors({
-  origin: 'https://shop-frontend-8y9t.onrender.com',
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true
 }));
 app.use(express.json());
